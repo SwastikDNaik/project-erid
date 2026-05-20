@@ -17,7 +17,8 @@ from views.budget import show_budget
 
 st.set_page_config(
     page_title="AI Finance Dashboard",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
 # ================= INIT =================
@@ -32,7 +33,7 @@ page = sidebar()
 
 # ================= PAGE ROUTING =================
 
-if page == "🏠 Dashboard":
+if page == "📊 Dashboard":
     show_dashboard(conn)
 
 elif page == "💸 Expenses":
