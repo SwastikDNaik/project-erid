@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 
+from datetime import datetime, timedelta
+
 from database.db import cursor
 
 from services.finance_service import *
@@ -32,7 +34,7 @@ def show_dashboard(conn):
         gap="large"
     )
 
-    # ================= SAVINGS =================
+    # ================= SAVINGS & BALANCE =================
 
     with col1:
 
@@ -41,18 +43,140 @@ def show_dashboard(conn):
             unsafe_allow_html=True
         )
 
+        # ================= CALCULATIONS =================
+
+        total_income_value = total_income(df)
+
+        total_expense_value = total_expense(df)
+
+        savings_data = pd.read_sql_query(
+            "SELECT amount FROM savings WHERE id=1",
+            conn
+        )
+
+        savings_amount = 0
+
+        if not savings_data.empty:
+            savings_amount = savings_data.iloc[0]["amount"]
+
+        balance = (
+            total_income_value -
+            total_expense_value -
+            savings_amount
+        )
+
+        # ================= DISPLAY =================
+
         st.subheader("💼 Savings")
 
         st.metric(
-            "Current Savings",
-            f"₹{savings(df)}"
+            "Savings",
+            f"₹{savings_amount}"
         )
+
+        st.metric(
+            "Balance",
+            f"₹{balance}"
+        )
+
+        st.markdown("---")
+
+        # ================= ADD TO SAVINGS =================
+
+        add_savings = st.number_input(
+            "Add To Savings",
+            min_value=0.0,
+            value=None,
+            placeholder="Enter amount",
+            key="add_savings"
+        )
+
+        if st.button("➕ Move To Savings"):
+
+            if (
+                add_savings is not None and
+                add_savings > 0 and
+                add_savings <= balance
+            ):
+
+                new_savings = (
+                    savings_amount +
+                    add_savings
+                )
+
+                cursor.execute(
+                    """
+                    UPDATE savings
+                    SET amount=?
+                    WHERE id=1
+                    """,
+                    (new_savings,)
+                )
+
+                conn.commit()
+
+                st.success(
+                    "Moved to savings!"
+                )
+
+                st.rerun()
+
+            else:
+
+                st.warning(
+                    "Invalid amount"
+                )
+
+        # ================= REMOVE FROM SAVINGS =================
+
+        remove_savings = st.number_input(
+            "Withdraw From Savings",
+            min_value=0.0,
+            value=None,
+            placeholder="Enter amount",
+            key="remove_savings"
+        )
+
+        if st.button("➖ Withdraw From Savings"):
+
+            if (
+                remove_savings is not None and
+                remove_savings > 0 and
+                remove_savings <= savings_amount
+            ):
+
+                new_savings = (
+                    savings_amount -
+                    remove_savings
+                )
+
+                cursor.execute(
+                    """
+                    UPDATE savings
+                    SET amount=?
+                    WHERE id=1
+                    """,
+                    (new_savings,)
+                )
+
+                conn.commit()
+
+                st.success(
+                    "Withdrawn from savings!"
+                )
+
+                st.rerun()
+
+            else:
+
+                st.warning(
+                    "Invalid amount"
+                )
 
         st.markdown(
             '</div>',
             unsafe_allow_html=True
         )
-
     # ================= PIE CHART =================
 
     with col2:
@@ -95,48 +219,307 @@ def show_dashboard(conn):
             unsafe_allow_html=True
         )
 
-    # ================= UPCOMING BILLS =================
+        # ================= UPCOMING BILLS =================
 
-    with col3:
+        with col3:
 
-        st.markdown(
-            '<div class="card">',
-            unsafe_allow_html=True
-        )
+            st.markdown(
+                '<div class="card">',
+                unsafe_allow_html=True
+            )
 
-        st.subheader("📅 Upcoming Bills")
+            st.subheader("📅 Upcoming Bills")
 
-        bills_df = pd.read_sql_query(
-        """
-        SELECT * FROM bills
-        ORDER BY due_date ASC
-        LIMIT 5
-        """,
-        conn
-        )
-        if not bills_df.empty:
+            bills_df = pd.read_sql_query(
+                """
+                SELECT * FROM bills
+                ORDER BY due_date ASC
+                """,
+                conn
+            )
 
-            for _, row in bills_df.iterrows():
+            upcoming_bills = []
 
-                st.markdown(
-                    f"""
-                    • {row['name']} — ₹{row['amount']}  
-                    📅 {row['due_date']}  
-                    🔁 {row['frequency']}
-                    """
+            today = datetime.today()
+
+            if not bills_df.empty:
+
+                for _, row in bills_df.iterrows():
+
+                    due_date = datetime.strptime(
+                        row['due_date'],
+                        "%Y-%m-%d"
+                    )
+
+                    frequency = row['frequency']
+
+                    # =====================================================
+                    # ONCE
+                    # =====================================================
+
+                    if frequency == "Once":
+
+                        if due_date.date() >= today.date():
+
+                            paid_check = pd.read_sql_query(
+                                """
+                                SELECT * FROM paid_bills
+                                WHERE bill_id = ?
+                                AND paid_date = ?
+                                """,
+                                conn,
+                                params=(
+                                    row['id'],
+                                    due_date.strftime("%Y-%m-%d")
+                                )
+                            )
+
+                            if paid_check.empty:
+
+                                upcoming_bills.append({
+                                    "id": row['id'],
+                                    "name": row['name'],
+                                    "amount": row['amount'],
+                                    "date": due_date
+                                })
+
+                    # =====================================================
+                    # DAILY
+                    # =====================================================
+
+                    elif frequency == "Daily":
+
+                        current = max(due_date, today)
+
+                        for i in range(10):
+
+                            bill_date = current + timedelta(days=i)
+
+                            paid_check = pd.read_sql_query(
+                                """
+                                SELECT * FROM paid_bills
+                                WHERE bill_id = ?
+                                AND paid_date = ?
+                                """,
+                                conn,
+                                params=(
+                                    row['id'],
+                                    bill_date.strftime("%Y-%m-%d")
+                                )
+                            )
+
+                            if paid_check.empty:
+
+                                upcoming_bills.append({
+                                    "id": row['id'],
+                                    "name": row['name'],
+                                    "amount": row['amount'],
+                                    "date": bill_date
+                                })
+
+                    # =====================================================
+                    # WEEKLY
+                    # =====================================================
+
+                    elif frequency == "Weekly":
+
+                        current = due_date
+
+                        while current.date() < today.date():
+                            current += timedelta(days=7)
+
+                        for i in range(10):
+
+                            bill_date = current + timedelta(days=7*i)
+
+                            paid_check = pd.read_sql_query(
+                                """
+                                SELECT * FROM paid_bills
+                                WHERE bill_id = ?
+                                AND paid_date = ?
+                                """,
+                                conn,
+                                params=(
+                                    row['id'],
+                                    bill_date.strftime("%Y-%m-%d")
+                                )
+                            )
+
+                            if paid_check.empty:
+
+                                upcoming_bills.append({
+                                    "id": row['id'],
+                                    "name": row['name'],
+                                    "amount": row['amount'],
+                                    "date": bill_date
+                                })
+
+                    # =====================================================
+                    # MONTHLY
+                    # =====================================================
+
+                    elif frequency == "Monthly":
+
+                        current = due_date
+
+                        while current.date() < today.date():
+                            current += timedelta(days=30)
+
+                        for i in range(10):
+
+                            bill_date = current + timedelta(days=30*i)
+
+                            paid_check = pd.read_sql_query(
+                                """
+                                SELECT * FROM paid_bills
+                                WHERE bill_id = ?
+                                AND paid_date = ?
+                                """,
+                                conn,
+                                params=(
+                                    row['id'],
+                                    bill_date.strftime("%Y-%m-%d")
+                                )
+                            )
+
+                            if paid_check.empty:
+
+                                upcoming_bills.append({
+                                    "id": row['id'],
+                                    "name": row['name'],
+                                    "amount": row['amount'],
+                                    "date": bill_date
+                                })
+
+                    # =====================================================
+                    # YEARLY
+                    # =====================================================
+
+                    elif frequency == "Yearly":
+
+                        current = due_date
+
+                        while current.date() < today.date():
+                            current += timedelta(days=365)
+
+                        for i in range(10):
+
+                            bill_date = current + timedelta(days=365*i)
+
+                            paid_check = pd.read_sql_query(
+                                """
+                                SELECT * FROM paid_bills
+                                WHERE bill_id = ?
+                                AND paid_date = ?
+                                """,
+                                conn,
+                                params=(
+                                    row['id'],
+                                    bill_date.strftime("%Y-%m-%d")
+                                )
+                            )
+
+                            if paid_check.empty:
+
+                                upcoming_bills.append({
+                                    "id": row['id'],
+                                    "name": row['name'],
+                                    "amount": row['amount'],
+                                    "date": bill_date
+                                })
+
+                # =====================================================
+                # SORT
+                # =====================================================
+
+                upcoming_bills = sorted(
+                    upcoming_bills,
+                    key=lambda x: x['date']
                 )
 
-        else:
+                # =====================================================
+                # SHOW TOP 4
+                # =====================================================
 
-            st.info("No upcoming bills")
-        
-        
+                upcoming_bills = upcoming_bills[:4]
 
-        st.markdown(
-            '</div>',
-            unsafe_allow_html=True
-        )
+                # =====================================================
+                # DISPLAY
+                # =====================================================
 
+                for bill in upcoming_bills:
+
+                    formatted_date = bill['date'].strftime(
+                        "%d %b"
+                    )
+
+                    with st.container(border=True):
+
+                        left, right = st.columns([3, 1])
+
+                        with left:
+
+                            st.markdown(
+                                f"""
+                                **{bill['name']}**  
+                                💰 ₹{bill['amount']}  
+                                📅 {formatted_date}
+                                """
+                            )
+
+                        with right:
+
+                            st.write("")
+
+                            if st.button(
+                                "✅ Pay",
+                                key=f"paid_{bill['id']}_{formatted_date}"
+                            ):
+
+                                # ================= ADD EXPENSE =================
+
+                                cursor.execute(
+                                    """
+                                    INSERT INTO transactions
+                                    (title, type, amount, category)
+                                    VALUES (?, ?, ?, ?)
+                                    """,
+                                    (
+                                        bill['name'],
+                                        "Expense",
+                                        bill['amount'],
+                                        "Bills"
+                                    )
+                                )
+
+                                # ================= MARK INSTANCE AS PAID =================
+
+                                cursor.execute(
+                                    """
+                                    INSERT INTO paid_bills
+                                    (bill_id, paid_date)
+                                    VALUES (?, ?)
+                                    """,
+                                    (
+                                        bill['id'],
+                                        bill['date'].strftime("%Y-%m-%d")
+                                    )
+                                )
+
+                                conn.commit()
+
+                                st.success("Bill marked as paid!")
+
+                                st.rerun()
+
+            else:
+
+                st.info("No upcoming bills")
+
+            st.markdown(
+                '</div>',
+                unsafe_allow_html=True
+            )
     # ================= BOTTOM SECTION =================
 
     st.markdown("---")
@@ -147,7 +530,7 @@ def show_dashboard(conn):
         gap="large"
     )
 
-    # ================= ADD TRANSACTION =================
+    # ================= ADD EXPENSE =================
 
     with col4:
 
@@ -156,12 +539,16 @@ def show_dashboard(conn):
             unsafe_allow_html=True
         )
 
-        st.subheader("➕ Add Transaction")
+        st.subheader("➕ Add Expense")
 
-        transaction_type = st.radio(
-            "Type",
-            ["Expense", "Income"]
+        title = st.text_input(
+            "Expense Title",
+            placeholder="E.g., Grocery Shopping"
         )
+
+        # ================= FIXED TYPE =================
+
+        transaction_type = "Expense"
 
         amount = st.number_input(
             "Amount (₹)",
@@ -178,25 +565,34 @@ def show_dashboard(conn):
                 "Bills",
                 "Travel",
                 "Shopping",
-                "Salary",
+                "Health",
+                "Entertainment",
                 "Other"
             ]
         )
 
-        if st.button("Add Transaction"):
+        # ================= SAVE =================
 
-            if amount > 0:
+        if st.button("Save Expense"):
+
+            if (
+                title and
+                amount is not None and
+                amount > 0
+            ):
 
                 cursor.execute(
                     """
                     INSERT INTO transactions(
+                        title,
                         type,
                         amount,
                         category
                     )
-                    VALUES (?, ?, ?)
+                    VALUES (?, ?, ?, ?)
                     """,
                     (
+                        title,
                         transaction_type,
                         amount,
                         category
@@ -205,19 +601,19 @@ def show_dashboard(conn):
 
                 conn.commit()
 
-                st.success("Transaction Added!")
+                st.success("Expense Added!")
 
                 st.rerun()
 
             else:
-                st.warning("Enter valid amount")
+
+                st.warning("Enter valid details")
 
         st.markdown(
             '</div>',
             unsafe_allow_html=True
         )
-
-    # ================= GOALS =================
+# ================= ADD INCOME =================
 
     with col5:
 
@@ -226,37 +622,83 @@ def show_dashboard(conn):
             unsafe_allow_html=True
         )
 
-        st.subheader("🎯 Goal Planning")
+        st.subheader("💰 Add Income")
 
-        goal_amount = st.number_input(
-            "Target (₹)",
-            value=50000
+        title = st.text_input(
+            "Income Source",
+            placeholder="E.g., Salary, Freelancing",
+            key="income_title"
         )
 
-        saved = st.number_input(
-            "Saved (₹)",
-            value=15000
+        # ================= FIXED TYPE =================
+
+        transaction_type = "Income"
+
+        amount = st.number_input(
+            "Income Amount (₹)",
+            min_value=0.0,
+            step=1.0,
+            value=None,
+            placeholder="Enter amount",
+            key="income_amount"
         )
 
-        if goal_amount > 0:
+        category = st.selectbox(
+            "Income Category",
+            [
+                "Salary",
+                "Freelancing",
+                "Business",
+                "Investments",
+                "Passive Income",
+                "Bonus",
+                "Other"
+            ],
+            key="income_category"
+        )
 
-            progress = saved / goal_amount
+        # ================= SAVE =================
 
-            st.progress(progress)
+        if st.button("Save Income"):
 
-            st.write(
-                f"₹{saved} / ₹{goal_amount}"
-            )
+            if (
+                title and
+                amount is not None and
+                amount > 0
+            ):
 
-            st.write(
-                f"Remaining: ₹{goal_amount - saved}"
-            )
+                cursor.execute(
+                    """
+                    INSERT INTO transactions(
+                        title,
+                        type,
+                        amount,
+                        category
+                    )
+                    VALUES (?, ?, ?, ?)
+                    """,
+                    (
+                        title,
+                        transaction_type,
+                        amount,
+                        category
+                    )
+                )
+
+                conn.commit()
+
+                st.success("Income Added!")
+
+                st.rerun()
+
+            else:
+
+                st.warning("Enter valid details")
 
         st.markdown(
             '</div>',
             unsafe_allow_html=True
         )
-
     # ================= INSIGHTS =================
 
     with col6:

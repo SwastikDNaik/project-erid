@@ -26,6 +26,7 @@ def show_bills(conn):
     frequency = st.selectbox(
         "Billing Frequency",
         [
+            "Once",
             "Daily",
             "Weekly",
             "Monthly",
@@ -149,12 +150,14 @@ def show_bills(conn):
                     new_frequency = st.selectbox(
                         "Frequency",
                         [
+                            "Once",
                             "Daily",
                             "Weekly",
                             "Monthly",
                             "Yearly"
                         ],
                         index=[
+                            "Once",
                             "Daily",
                             "Weekly",
                             "Monthly",
