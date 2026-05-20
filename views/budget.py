@@ -60,31 +60,37 @@ def show_budget(conn):
     monthly_budget = st.number_input(
         "Enter Monthly Budget (₹)",
         min_value=0.0,
-        value=float(saved_budget),
-        step=100.0
+        value=None if saved_budget == 0 else float(saved_budget),
+        step=100.0,
+        placeholder="Enter your monthly budget"
     )
 
     # ================= SAVE =================
-
     if st.button("Save Budget"):
 
-        cursor.execute(
-            """
-            INSERT INTO budget(monthly_budget)
-            VALUES (?)
-            """,
-            (monthly_budget,)
-        )
+        if monthly_budget is not None:
 
-        conn.commit()
+            cursor.execute(
+                """
+                INSERT INTO budget(monthly_budget)
+                VALUES (?)
+                """,
+                (monthly_budget,)
+            )
 
-        st.success("Budget Saved!")
+            conn.commit()
 
-        st.rerun()
+            st.success("Budget Saved!")
+
+            st.rerun()
+
+        else:
+
+            st.warning("Enter a budget amount")
 
     # ================= PROGRESS =================
 
-    if monthly_budget > 0:
+    if monthly_budget is not None and monthly_budget > 0:
 
         budget_left = (
             monthly_budget -

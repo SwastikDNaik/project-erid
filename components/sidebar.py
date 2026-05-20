@@ -12,7 +12,7 @@ def sidebar():
             "Navigation",
             [
                 "🏠 Dashboard",
-                "💳 Transactions",
+                "💸 Expenses",
                 "📅 Bills & Payments",
                 "💰 Income Sources",
                 "🎯 Budget Management"

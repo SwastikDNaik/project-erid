@@ -5,6 +5,7 @@ def create_tables():
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS transactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT,
         type TEXT,
         amount REAL,
         category TEXT

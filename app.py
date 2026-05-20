@@ -35,7 +35,7 @@ page = sidebar()
 if page == "🏠 Dashboard":
     show_dashboard(conn)
 
-elif page == "💳 Transactions":
+elif page == "💸 Expenses":
     show_transactions(conn)
 
 elif page == "📅 Bills & Payments":
