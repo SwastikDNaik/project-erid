@@ -82,13 +82,9 @@ def budget_pie_chart(df, budget):
     # PIE CHART
     # =====================================================
 
-    wedges, texts, autotexts = ax.pie(
+    wedges, _ = ax.pie(
 
         amounts,
-
-        labels=labels,
-
-        autopct='%1.1f%%',
 
         startangle=90,
 
@@ -96,18 +92,11 @@ def budget_pie_chart(df, budget):
 
         wedgeprops={
 
-            "width": 0.83,
+            "width": 0.42,
 
             "edgecolor": "#0f172a",
 
             "linewidth": 3
-        },
-
-        textprops={
-
-            "color": "white",
-
-            "fontsize": 10
         }
     )
 
@@ -119,7 +108,7 @@ def budget_pie_chart(df, budget):
 
         (0, 0),
 
-        0.55,
+        0.58,
 
         fc="#0f172a"
     )
@@ -146,6 +135,8 @@ def budget_pie_chart(df, budget):
 
         fontsize=16,
 
+        fontweight="bold",
+
         color="white"
     )
 
@@ -164,6 +155,47 @@ def budget_pie_chart(df, budget):
         fontsize=10,
 
         color="#94a3b8"
+    )
+
+    # =====================================================
+    # LEGEND
+    # =====================================================
+
+    legend = ax.legend(
+
+        wedges,
+
+        labels,
+
+        title="Categories",
+
+        loc="lower center",
+
+        bbox_to_anchor=(0.5, -0.22),
+
+        ncol=2,
+
+        frameon=False,
+
+        fontsize=10
+    )
+
+    plt.setp(
+
+        legend.get_texts(),
+
+        color="white"
+    )
+
+    plt.setp(
+
+        legend.get_title(),
+
+        color="white",
+
+        fontsize=11,
+
+        fontweight="bold"
     )
 
     # =====================================================

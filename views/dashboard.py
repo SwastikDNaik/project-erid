@@ -376,19 +376,38 @@ def show_budget_card(
             1
         )
 
+        # =====================================================
+        # PERCENTAGE COLOR
+        # =====================================================
+
+        if usage_percent <= 50:
+            percent_color = "#22c55e"      # Green
+
+        elif usage_percent <= 75:
+            percent_color = "#f59e0b"      # Orange
+
+        elif usage_percent <= 100:
+            percent_color = "#f87171"      # Light Red
+
+        else:
+            percent_color = "#dc2626"      # Dark Red
+
+
         st.markdown(
             f"""
             <div style="
                 text-align:center;
                 margin-top:10px;
-                font-size:28px;
-                font-weight:700;
+                font-size:35px;
+                font-weight:750;
+                color:{percent_color};
             ">
                 {usage_percent}%
             </div>
 
             <div style="
                 text-align:center;
+                font-size:15px;
                 color:#94a3b8;
             ">
                 ₹{expense} used of ₹{monthly_budget}
@@ -396,6 +415,32 @@ def show_budget_card(
             """,
             unsafe_allow_html=True
         )
+        # =====================================================
+        # OVERBUDGET MESSAGE
+        # =====================================================
+
+        if expense > monthly_budget:
+
+            over_budget = expense - monthly_budget
+
+            st.markdown(
+                f"""
+                <div style="
+                    margin-top:15px;
+                    padding:12px;
+                    border-radius:12px;
+                    background:#3f1515;
+                    border:1px solid #dc2626;
+                    color:#fca5a5;
+                    text-align:center;
+                    font-weight:600;
+                    font-size:16px;
+                ">
+                    ⚠️ You are over budget by ₹{over_budget}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
     else:
 
