@@ -160,6 +160,9 @@ def show_header():
     """, unsafe_allow_html=True)
 
     st.markdown("## 📊 Financial Overview")
+    
+    
+    st.markdown("---")
 
 
 def show_savings_card(
@@ -179,10 +182,8 @@ def show_savings_card(
         savings_amount
     )
 
-    st.markdown(
-        '<div class="card">',
-        unsafe_allow_html=True
-    )
+    
+
 
     st.subheader("💼 Savings")
 
@@ -281,11 +282,6 @@ def show_budget_card(
     df
 ):
 
-    st.markdown(
-        '<div class="card">',
-        unsafe_allow_html=True
-    )
-
     st.subheader("📊 Budget Usage")
 
     budget_data = pd.read_sql_query(
@@ -355,10 +351,7 @@ def show_budget_card(
 
 def show_bills_card(conn):
 
-    st.markdown(
-        '<div class="card">',
-        unsafe_allow_html=True
-    )
+    
 
     st.subheader("📅 Upcoming Bills")
 
@@ -547,10 +540,7 @@ def show_bills_card(conn):
 
 def show_expense_form(conn):
 
-    st.markdown(
-        '<div class="card">',
-        unsafe_allow_html=True
-    )
+    
 
     st.subheader("➕ Add Expense")
 
@@ -611,10 +601,7 @@ def show_expense_form(conn):
 
 def show_income_form(conn):
 
-    st.markdown(
-        '<div class="card">',
-        unsafe_allow_html=True
-    )
+    
 
     st.subheader("💰 Add Income")
 
@@ -678,10 +665,7 @@ def show_income_form(conn):
 
 def show_insights(df):
 
-    st.markdown(
-        '<div class="card">',
-        unsafe_allow_html=True
-    )
+    
 
     st.subheader("📈 Insights")
 
@@ -790,6 +774,9 @@ def show_dashboard(conn):
     st.markdown(
         "## 💼 Financial Management"
     )
+    
+    
+    st.markdown("---")
 
     col4, col5, col6 = st.columns(
         3,
@@ -809,7 +796,5 @@ def show_dashboard(conn):
     # =====================================================
     # AI ASSISTANT
     # =====================================================
-
-    st.markdown("---")
 
     ai_assistant()

@@ -72,7 +72,6 @@ def ai_assistant():
 
                     response = ask_ai(
                         user_input,
-                        financial_context
                     )
 
                     # =====================================
