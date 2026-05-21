@@ -28,5 +28,25 @@ def create_tables():
         due_date TEXT
     )
     """)
+    
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS savings (
+        id INTEGER PRIMARY KEY,
+        amount REAL
+    )
+    """)
+    
+    cursor.execute("""
+    INSERT OR IGNORE INTO savings(id, amount)
+    VALUES (1, 0)
+    """)
+    
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS paid_bills (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        bill_id INTEGER,
+        paid_date TEXT
+    )
+    """)
 
     conn.commit()

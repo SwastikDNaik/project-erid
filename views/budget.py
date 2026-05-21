@@ -2,8 +2,8 @@ import streamlit as st
 import pandas as pd
 
 from database.db import cursor
-
 from services.finance_service import *
+
 
 def show_budget(conn):
 
@@ -11,39 +11,9 @@ def show_budget(conn):
 
     df = load_transactions(conn)
 
-    total_income_value = total_income(df)
     total_expense_value = total_expense(df)
 
-    remaining = (
-        total_income_value -
-        total_expense_value
-    )
-
-    # ================= METRICS =================
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.metric(
-            "Total Income",
-            f"₹{total_income_value}"
-        )
-
-    with col2:
-        st.metric(
-            "Total Expense",
-            f"₹{total_expense_value}"
-        )
-
-    with col3:
-        st.metric(
-            "Remaining Budget",
-            f"₹{remaining}"
-        )
-
-    st.markdown("---")
-
-    # ================= LOAD BUDGET =================
+    # ================= LOAD SAVED BUDGET =================
 
     budget_data = pd.read_sql_query(
         "SELECT * FROM budget ORDER BY id DESC LIMIT 1",
@@ -60,50 +30,66 @@ def show_budget(conn):
     monthly_budget = st.number_input(
         "Enter Monthly Budget (₹)",
         min_value=0.0,
-        value=None if saved_budget == 0 else float(saved_budget),
-        step=100.0,
-        placeholder="Enter your monthly budget"
+        value=float(saved_budget) if saved_budget != 0 else 0.0,
+        step=100.0
     )
 
+    # ================= CALCULATIONS =================
+
+    remaining = monthly_budget - total_expense_value
+
+    # ================= METRICS =================
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric(
+            "Planned Budget",
+            f"₹{monthly_budget}"
+        )
+
+    with col2:
+        st.metric(
+            "Total Expense",
+            f"₹{total_expense_value}"
+        )
+
+    with col3:
+        st.metric(
+            "Remaining Budget",
+            f"₹{remaining}"
+        )
+
+    st.markdown("---")
+
     # ================= SAVE =================
+
     if st.button("Save Budget"):
 
-        if monthly_budget is not None:
+        cursor.execute(
+            """
+            INSERT INTO budget(monthly_budget)
+            VALUES (?)
+            """,
+            (monthly_budget,)
+        )
 
-            cursor.execute(
-                """
-                INSERT INTO budget(monthly_budget)
-                VALUES (?)
-                """,
-                (monthly_budget,)
-            )
+        conn.commit()
 
-            conn.commit()
+        st.success("Budget Saved!")
 
-            st.success("Budget Saved!")
-
-            st.rerun()
-
-        else:
-
-            st.warning("Enter a budget amount")
+        st.rerun()
 
     # ================= PROGRESS =================
 
-    if monthly_budget is not None and monthly_budget > 0:
+    if monthly_budget > 0:
 
-        budget_left = (
-            monthly_budget -
-            total_expense_value
-        )
+        budget_left = monthly_budget - total_expense_value
 
-        budget_used = (
-            total_expense_value /
-            monthly_budget
-        )
+        budget_used = total_expense_value / monthly_budget
 
         st.progress(
-            min(budget_used, 1.0)
+            min(float(budget_used), 1.0)
         )
 
         st.write(
