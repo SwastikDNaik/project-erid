@@ -124,6 +124,7 @@ def sidebar():
         border-radius: 14px;
 
         height: 56px;
+        
         font-size: 16px;
 
         border: none;
