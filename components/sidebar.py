@@ -55,8 +55,10 @@ def sidebar():
         padding: 10px 12px;
 
         border-radius: 14px;
+        
+        margin-top: 10px;
 
-        margin-bottom: 6px;
+        margin-bottom: 10px;
 
         transition: 0.25s ease;
 
@@ -104,7 +106,7 @@ def sidebar():
 
     div[role="radiogroup"] p {
 
-        font-size: 15px;
+        font-size: 22px;
 
         font-weight: 600;
 
@@ -121,7 +123,8 @@ def sidebar():
 
         border-radius: 14px;
 
-        height: 42px;
+        height: 56px;
+        font-size: 16px;
 
         border: none;
 
@@ -134,7 +137,7 @@ def sidebar():
 
         color: white;
 
-        font-weight: 600;
+        font-weight: bold;
 
         transition: 0.3s ease;
     }
@@ -164,7 +167,7 @@ def sidebar():
 
         st.markdown("""
         <div style="
-            font-size: 30px;
+            font-size: 40px;
             font-weight: 800;
             color: white;
             margin-bottom: 12px;
@@ -195,7 +198,7 @@ def sidebar():
         # =====================================================
 
         st.markdown(
-            "<div style='height: 55vh;'></div>",
+            "<div style='height: 40vh;'></div>",
             unsafe_allow_html=True
         )
 

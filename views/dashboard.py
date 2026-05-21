@@ -150,7 +150,7 @@ def show_header():
 
     st.markdown("""
     <div style="
-        font-size: 36px;
+        font-size: 67px;
         font-weight: 900;
         color: #6366f1;
         margin-bottom: 10px;
@@ -158,9 +158,13 @@ def show_header():
         ERID
     </div>
     """, unsafe_allow_html=True)
-
-    st.markdown("## 📊 Financial Overview")
     
+    st.markdown("---")
+
+    st.markdown("""
+    <div class="main-section-title">
+        📊 Financial Overview
+    """, unsafe_allow_html=True)
     
     st.markdown("---")
 
@@ -182,36 +186,78 @@ def show_savings_card(
         savings_amount
     )
 
-    
+    st.markdown("""
+    <div class="section-title">
+        💼 Savings
+    </div>
+    """, unsafe_allow_html=True)
+    # =====================================================
+    # TOP METRICS
+    # =====================================================
+
+    col1, col2 = st.columns(2, gap="medium")
+    with col1:
+
+        st.markdown(
+            f"""
+    <div class="stats-card">
+        <div class="stats-label">
+            Savings
+        </div>
+        <div class="stats-value">
+            ₹{savings_amount:,.0f}
+        </div>
+    </div>
+    """,
+            unsafe_allow_html=True
+        )
 
 
-    st.subheader("💼 Savings")
+    with col2:
 
-    st.metric(
-        "Savings",
-        f"₹{savings_amount}"
-    )
+        st.markdown(
+            f"""
+    <div class="stats-card balance-card">
+        <div class="stats-label">
+            Balance
+        </div>
+        <div class="stats-value balance-value">
+            ₹{balance:,.0f}
+        </div>
+    </div>
+    """,
+            unsafe_allow_html=True
+        )
 
-    st.metric(
-        "Balance",
-        f"₹{balance}"
-    )
-
-    st.markdown("---")
+    st.markdown("<br>", unsafe_allow_html=True)
 
     # =====================================================
     # ADD TO SAVINGS
     # =====================================================
 
+    st.markdown("""
+    <div style="
+        font-size:15px;
+        font-weight:600;
+        margin-bottom:8px;
+    ">
+        Add To Savings
+    </div>
+    """, unsafe_allow_html=True)
+
     add_savings = st.number_input(
-        "Add To Savings",
+        "",
         min_value=0.0,
         value=0.0,
         step=1.0,
-        key="add_savings"
+        key="add_savings",
+        label_visibility="collapsed"
     )
 
-    if st.button("➕ Move To Savings"):
+    if st.button(
+        "➕ Move To Savings",
+        use_container_width=True
+    ):
 
         if (
             add_savings > 0 and
@@ -223,31 +269,43 @@ def show_savings_card(
                 savings_amount + add_savings
             )
 
-            st.success(
-                "Moved to savings!"
-            )
+            st.success("Moved to savings!")
 
             st.rerun()
 
         else:
 
-            st.warning(
-                "Invalid amount"
-            )
+            st.warning("Invalid amount")
+
+    st.markdown("<br>", unsafe_allow_html=True)
 
     # =====================================================
     # WITHDRAW SAVINGS
     # =====================================================
 
+    st.markdown("""
+    <div style="
+        font-size:15px;
+        font-weight:600;
+        margin-bottom:8px;
+    ">
+        Withdraw From Savings
+    </div>
+    """, unsafe_allow_html=True)
+
     remove_savings = st.number_input(
-        "Withdraw From Savings",
+        "",
         min_value=0.0,
         value=0.0,
         step=1.0,
-        key="remove_savings"
+        key="remove_savings",
+        label_visibility="collapsed"
     )
 
-    if st.button("➖ Withdraw From Savings"):
+    if st.button(
+        "➖ Withdraw From Savings",
+        use_container_width=True
+    ):
 
         if (
             remove_savings > 0 and
@@ -259,22 +317,16 @@ def show_savings_card(
                 savings_amount - remove_savings
             )
 
-            st.success(
-                "Withdrawn from savings!"
-            )
+            st.success("Withdrawn from savings!")
 
             st.rerun()
 
         else:
 
-            st.warning(
-                "Invalid amount"
-            )
+            st.warning("Invalid amount")
 
-    st.markdown(
-        '</div>',
-        unsafe_allow_html=True
-    )
+    st.markdown("---")
+    
 
 
 def show_budget_card(
@@ -282,7 +334,11 @@ def show_budget_card(
     df
 ):
 
-    st.subheader("📊 Budget Usage")
+    st.markdown("""
+    <div class="section-title">
+        📊 Budget Usage
+    </div>
+    """, unsafe_allow_html=True)
 
     budget_data = pd.read_sql_query(
         """
@@ -306,10 +362,14 @@ def show_budget_card(
 
     if monthly_budget > 0:
 
-        budget_pie_chart(
-            expense,
-            monthly_budget
-        )
+        left, center, right = st.columns([0.1, 1, 0.1])
+
+        with center:
+
+            budget_pie_chart(
+                df,
+                monthly_budget
+            )
 
         usage_percent = round(
             (expense / monthly_budget) * 100,
@@ -343,17 +403,16 @@ def show_budget_card(
             "Set a monthly budget first"
         )
 
-    st.markdown(
-        '</div>',
-        unsafe_allow_html=True
-    )
-
 
 def show_bills_card(conn):
 
     
 
-    st.subheader("📅 Upcoming Bills")
+    st.markdown("""
+    <div class="section-title">
+        📅 Upcoming Bills
+    </div>
+    """, unsafe_allow_html=True)
 
     bills_df = pd.read_sql_query(
         """
@@ -368,11 +427,7 @@ def show_bills_card(conn):
 
         st.info("No upcoming bills")
 
-        st.markdown(
-            '</div>',
-            unsafe_allow_html=True
-        )
-
+    
         return
 
     paid_set = load_paid_bills(conn)
@@ -459,18 +514,8 @@ def show_bills_card(conn):
             "%d %b"
         )
 
-        st.markdown(
-            """
-            <div style="
-                background: rgba(255,255,255,0.03);
-                padding: 12px;
-                border-radius: 14px;
-                margin-bottom: 10px;
-                border: 1px solid rgba(255,255,255,0.06);
-            ">
-            """,
-            unsafe_allow_html=True
-        )
+       
+        st.markdown("---")
 
         left, right = st.columns([3, 1])
 
@@ -478,10 +523,21 @@ def show_bills_card(conn):
 
             st.markdown(
                 f"""
-                **{bill['name']}**  
-                💰 ₹{bill['amount']}  
-                📅 {formatted_date}
-                """
+                <div class="bill-card">
+                    <div class="bill-top">
+                        <div class="bill-title">
+                            {bill['name']}
+                        </div>
+                        <div class="bill-amount">
+                            ₹{bill['amount']}
+                        </div>
+                    </div>
+                    <div class="bill-date">
+                        📅 {formatted_date}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
             )
 
         with right:
@@ -527,22 +583,18 @@ def show_bills_card(conn):
 
                 st.rerun()
 
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
 
-    st.markdown(
-        '</div>',
-        unsafe_allow_html=True
-    )
 
 
 def show_expense_form(conn):
 
     
 
-    st.subheader("➕ Add Expense")
+    st.markdown("""
+    <div class="section-title">
+        ➕ Add Expense
+    </div>
+    """, unsafe_allow_html=True)
 
     title = st.text_input(
         "Expense Title",
@@ -593,17 +645,15 @@ def show_expense_form(conn):
                 "Enter valid details"
             )
 
-    st.markdown(
-        '</div>',
-        unsafe_allow_html=True
-    )
 
 
 def show_income_form(conn):
 
-    
-
-    st.subheader("💰 Add Income")
+    st.markdown("""
+    <div class="section-title">
+        💰 Add Income
+    </div>
+    """, unsafe_allow_html=True)
 
     title = st.text_input(
         "Income Source",
@@ -657,26 +707,20 @@ def show_income_form(conn):
                 "Enter valid details"
             )
 
-    st.markdown(
-        '</div>',
-        unsafe_allow_html=True
-    )
-
 
 def show_insights(df):
 
     
 
-    st.subheader("📈 Insights")
+    st.markdown("""
+    <div class="section-title">
+        📈 Insights
+    </div>
+    """, unsafe_allow_html=True)
 
     if df.empty:
 
         st.info("No financial data yet")
-
-        st.markdown(
-            '</div>',
-            unsafe_allow_html=True
-        )
 
         return
 
@@ -731,10 +775,6 @@ def show_insights(df):
             f"🔥 Highest Spending: {top_category}"
         )
 
-    st.markdown(
-        '</div>',
-        unsafe_allow_html=True
-    )
 
 
 # =========================================================
@@ -771,9 +811,11 @@ def show_dashboard(conn):
 
     st.markdown("---")
 
-    st.markdown(
-        "## 💼 Financial Management"
-    )
+    st.markdown("""
+    <div class="main-section-title">
+        💼 Financial Management
+    </div>
+    """, unsafe_allow_html=True)
     
     
     st.markdown("---")
